@@ -1,6 +1,6 @@
 ![Notes Application](client/images/movie_wallet.png)
 
-This is a full stack application that stores users favorite movies so that they can view it any times from anywhere. The application has been designed using **NextJS** for the front-end, **Apollo Graphql** as an API, and **MongoDB** to perform **CRUD** operations using mongoose.
+This is a full stack application that stores users favorite movies so that they can view it any times from anywhere. The application has been designed using **NextJS** for the front-end, **Apollo Graphql** as an API, and **MongoDB** to perform CRUD operations using mongoose.
 
 **To use this repository:**
 

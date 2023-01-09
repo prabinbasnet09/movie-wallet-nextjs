@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import Head from 'next/head';
 import {useQuery, useMutation, gql} from "@apollo/client";
 import styles from '../styles/Home.module.css';
 import pageStyles from '../styles/MoviesList.module.css';
+import addUpdateStyles from '../styles/addUpdate.module.css';
 import movieStyles from '../styles/MoviesList.module.css';
 import cardStyles from '../styles/cards.module.css';
 import { useEffect, useState, useMemo} from 'react';
@@ -10,6 +12,9 @@ import ReactPaginate from 'react-paginate';
 import MovieSearch from './search';
 import movieImg from './Bullet Train.png'
 import UpdateMovie from '../components/UpdateMovie'
+import Popup from 'reactjs-popup';
+import 'reactjs-popup/dist/index';
+import 'react'
 
 const GET_MOVIES = gql`
     query GetMovies{
@@ -61,6 +66,11 @@ export default function MoviesList(){
         }
     }, [loading, data]);
 
+    const reloadMovies = () => {
+        console.log(data.movies);
+        setAllMovies(data.movies);
+    }
+
     //local state for adding and updating movies
     const [addMovieTrigger, setAddMovieTrigger] = useState(false);
     const [updateMovieTrigger, setUpdateMovieTrigger] = useState(false);
@@ -106,6 +116,9 @@ export default function MoviesList(){
     
     return(
         <div>
+            <Head>
+                <script type="text/javascript" src="../scripts/addUpdate.js"></script>
+            </Head>
             <div className={styles.movieSearchAdd}>
                 <MovieSearch setAllMovies = {setAllMovies}/>
                 <button className={styles.addMovie} onClick = {() => setAddMovieTrigger(true)} >Add Movie</button>
@@ -139,7 +152,7 @@ export default function MoviesList(){
                                                     yearReleased: movie.yearReleased,
                                                     rating: movie.rating
                                                 });
-                                                }}>Edit</button>                
+                                                }}>Edit</button>
                                         </div>
                                     </div>
                                 </div>
@@ -148,53 +161,64 @@ export default function MoviesList(){
                 </section>
             </main>
         {updateMovieTrigger &&
-        <form>
-            <input type = "text" defaultValue={movie.name} onChange={(e) => updateMovieName(e)} />
-            <input type = "text" defaultValue={movie.genre} onChange={(e) => updateMovieGenre(e)} />
-            <input type = "text" defaultValue={movie.yearReleased} onChange={(e) => updateMovieYear(e)} />
-            <input type = "text" defaultValue={movie.rating} onChange={(e) => updateMovieRating(e)} />
+        <div className={addUpdateStyles.container}>
+            <form className={addUpdateStyles.popup}>
+                <div className = {addUpdateStyles.close}>
+                    <div class="close" onClick={() => setUpdateMovieTrigger(false)}>&times;</div>
+                </div>
+                <input type = "text" defaultValue={movie.name} placeholder = "Name" onChange={(e) => updateMovieName(e)} />
+                <input type = "text" defaultValue={movie.genre} placeholder = "Genre" onChange={(e) => updateMovieGenre(e)} />
+                <input type = "text" defaultValue={movie.yearReleased} placeholder = "Released Year" onChange={(e) => updateMovieYear(e)} />
+                <input type = "text" defaultValue={movie.rating} placeholder = "Rating" onChange={(e) => updateMovieRating(e)} />
 
-            <button onClick={() => {
-                setUpdateMovieTrigger(false);
-                    updateMovie({
-                        variables: {
-                            input: {
-                                id: movie.id,
-                                name: movieName? movieName : movie.name,
-                                genre: genre? genre: movie.genre,
-                                yearReleased: yearReleased? Number(yearReleased) : Number(movie.yearReleased),
-                                rating: rating? Number(rating) : Number(movie.rating)
+                <button onClick={() => {
+                    setUpdateMovieTrigger(false);
+                        updateMovie({
+                            variables: {
+                                input: {
+                                    id: movie.id,
+                                    name: movieName? movieName : movie.name,
+                                    genre: genre? genre: movie.genre,
+                                    yearReleased: yearReleased? Number(yearReleased) : Number(movie.yearReleased),
+                                    rating: rating? Number(rating) : Number(movie.rating)
+                                }
                             }
-                        }
-                    })
-                    refetch();
-                }}>Update Movie</button>
-        </form>
+                        })
+                        refetch();
+                        reloadMovies();
+                    }}>Update Movie</button>
+            </form>
+        </div>
         }
 
         {/* <button onClick = {() => setAddMovieTrigger(true)} >Add Movie</button> */}
        
        {addMovieTrigger && 
-        <form>
-            <div><input type = "text" onChange={(e) => updateMovieName(e)}/></div>
-            <div><input type = "text" onChange={(e) => updateMovieGenre(e)}/></div>
-            <div><input type = "number" onChange={(e) => updateMovieYear(e)}/></div>
-            <div><input type = "number" onChange = {(e) => updateMovieRating(e)}/></div>
-            <input type = "submit" onClick= {(e) => {
-                setAddMovieTrigger(false);
-                addMovie({
-                    variables: {
-                        input: {
-                            name: movieName,
-                            genre: genre,
-                            yearReleased: Number(yearReleased),
-                            rating: Number(rating)
+       <div className={addUpdateStyles.container}>
+            <form className={addUpdateStyles.popup}>
+                <div className = {addUpdateStyles.close}>
+                    <div class="close" onClick={() => setAddMovieTrigger(false)}>&times;</div>
+                </div>
+                <div><input type = "text" placeholder = "Name" onChange={(e) => updateMovieName(e)}/></div>
+                <div><input type = "text" placeholder = "Genre" onChange={(e) => updateMovieGenre(e)}/></div>
+                <div><input type = "number" placeholder = "Released Year" onChange={(e) => updateMovieYear(e)}/></div>
+                <div><input type = "number" placeholder = "Rating" onChange = {(e) => updateMovieRating(e)}/></div>
+                <button type = "submit" onClick= {(e) => {
+                    setAddMovieTrigger(false);
+                    addMovie({
+                        variables: {
+                            input: {
+                                name: movieName,
+                                genre: genre,
+                                yearReleased: Number(yearReleased),
+                                rating: Number(rating)
+                            }
                         }
-                    }
-                })
-                refetch();
-            }}/>
-        </form>
+                    })
+                    refetch();
+                }}>Submit</button>
+            </form>
+        </div>
         }
         <ReactPaginate
             previousLabel={"Previous"}
@@ -206,6 +230,10 @@ export default function MoviesList(){
             nextLinkClassName={pageStyles.nextBttn}
             disabledClassName={pageStyles.paginationDisabled}
             activeClassName={pageStyles.paginationActive}
+            onClick={() => {
+                setAddMovieTrigger(false) 
+                setUpdateMovieTrigger(false)}
+            }
         />
     </div>
     )

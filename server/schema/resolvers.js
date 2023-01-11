@@ -33,13 +33,19 @@ const resolvers = {
 
         updateMovie: async (_, args) => {
             const updateMovie = args.input;
+
             let movie = await Movie.findById(updateMovie.id).exec();
+
             movie.name = updateMovie.name;
             movie.genre = updateMovie.genre;
             movie.yearReleased = updateMovie.yearReleased;
             movie.rating = updateMovie.rating;
-            movie.save();
-            return movie;
+            
+            const res = await movie.save();
+            return {
+                id: res.id,
+                ...res._doc
+            };
         },
 
         deleteMovie: async (_, args) => {
@@ -47,12 +53,6 @@ const resolvers = {
             return null;
         }
     },
-
-    // Movie: {
-    //     favoriteMovies: () => {
-    //         const movies = 
-    //     }
-    // }
 };
 
 module.exports = { resolvers }

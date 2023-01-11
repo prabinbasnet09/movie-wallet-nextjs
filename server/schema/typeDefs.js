@@ -31,7 +31,7 @@ const typeDefs = `#graphql
     type Mutation{
         addMovie(input: AddMovieInput!): Movie
         updateMovie(input: UpdateMovieInput!): Movie!
-        deleteMovie(name: String!): Movie!
+        deleteMovie(name: String!): Movie
     }
 `
 module.exports = { typeDefs }

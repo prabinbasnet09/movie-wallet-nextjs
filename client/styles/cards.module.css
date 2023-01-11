@@ -87,14 +87,10 @@
   }
   .card_edit {
     margin-left: auto;
-    padding: 5px 20px;
+    padding: 3px 15px;
     background-color: #ffffff;
     border-radius: 20px;
     cursor: pointer;
-  }
-
-  .card_edit:hover{
-
   }
   
   @media only screen and (max-width: 1000px) {

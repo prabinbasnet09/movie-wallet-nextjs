@@ -10,7 +10,7 @@ import cardStyles from '../styles/cards.module.css';
 import { useEffect, useState, useMemo} from 'react';
 import ReactPaginate from 'react-paginate';
 import MovieSearch from './search';
-import movieImg from './Bullet Train.png'
+import movieImg from '../images/Bullet Train.png'
 import UpdateMovie from '../components/UpdateMovie'
 import Popup from 'reactjs-popup';
 import 'reactjs-popup/dist/index';
@@ -49,6 +49,14 @@ const UPDATE_MOVIE = gql`
         }
     }
 `
+
+const DELETE_MOVIE = gql`
+    mutation DeleteMovie($name: String!){
+        deleteMovie(name: $name){
+            name
+        }
+    }
+`
 export default function MoviesList(){
     //query
     const {data, loading, error, refetch} = useQuery(GET_MOVIES);
@@ -56,6 +64,7 @@ export default function MoviesList(){
     //mutations
     const [addMovie] = useMutation(ADD_MOVIE);
     const [updateMovie] = useMutation(UPDATE_MOVIE);
+    const [deleteMovie] = useMutation(DELETE_MOVIE);
 
     //local state for storing all the retrieved movies and manipulating according to search
     const [allMovies, setAllMovies] = useState([]);
@@ -64,16 +73,12 @@ export default function MoviesList(){
         if(loading === false && data){
             setAllMovies(data.movies);
         }
-    }, [loading, data]);
-
-    const reloadMovies = () => {
-        console.log(data.movies);
-        setAllMovies(data.movies);
-    }
+    }, [ loading, data]);
 
     //local state for adding and updating movies
     const [addMovieTrigger, setAddMovieTrigger] = useState(false);
     const [updateMovieTrigger, setUpdateMovieTrigger] = useState(false);
+    const [search, setSearch] = useState("");
 
     //local state for movie object
     const [movie, setMovie] = useState({});
@@ -88,7 +93,7 @@ export default function MoviesList(){
     const moviesPerPage = 6;
     const pagesVisited = pageNumber * moviesPerPage;
 
-    const pageCount = Math.ceil(14/moviesPerPage);
+    const pageCount = (allMovies != null)? Math.ceil(allMovies.length/moviesPerPage) : 0;
 
     const changePage = (({selected}) => {
         setPageNumber(selected);
@@ -120,13 +125,31 @@ export default function MoviesList(){
                 <script type="text/javascript" src="../scripts/addUpdate.js"></script>
             </Head>
             <div className={styles.movieSearchAdd}>
-                <MovieSearch setAllMovies = {setAllMovies}/>
+                {/* <MovieSearch allMovies = {allMovies} setAllMovies = {setAllMovies}/> */}
+                <div className={styles.searchBox}>
+                    <input 
+                        type = "text"
+                        placeholder='Search Movie'
+                        onChange = {(e) => {
+                            setSearch(e.target.value);
+                        }}
+                        className = {styles.search}
+                    />
+            </div>
                 <button className={styles.addMovie} onClick = {() => setAddMovieTrigger(true)} >Add Movie</button>
             </div>
             <main className={cardStyles.cardMain}>
                 <section className={cardStyles.cards}>
                     {allMovies && 
-                        allMovies.slice(pagesVisited, pagesVisited + moviesPerPage).map((movie) => ( 
+                        allMovies.filter((movie) => {
+                            if(search === "") {
+                                return movie;
+                            }
+                            else if(movie.name.toLowerCase().includes(search.toLowerCase())){
+                                return movie;
+                            }
+                            refetch();
+                        }).slice(pagesVisited, pagesVisited + moviesPerPage).map((movie) => ( 
                             // <Link href={`/${movie.id.toString()}`}>
                                 <div key = {movie.id} className = {cardStyles.card}>
                                     <div className = {cardStyles.card_image_container}>
@@ -153,6 +176,25 @@ export default function MoviesList(){
                                                     rating: movie.rating
                                                 });
                                                 }}>Edit</button>
+                                                <div style={{
+                                                    "font-size": '30px'}}
+                                                    onClick = {() => refetch()}>
+                                                    🔄️
+                                                </div>
+                                      
+                                            <button type = "submit" style={{
+                                                padding: '3px 10px',
+                                                "background-color": '#ffffff',
+                                                "border-radius": '20px',
+                                                cursor: 'pointer',
+                                            }} onClick={(e) => {
+                                                deleteMovie({
+                                                    variables: {
+                                                        name: movie.name
+                                                    }
+                                                });
+                                                refetch();
+                                                }}>Remove</button>
                                         </div>
                                     </div>
                                 </div>
@@ -170,8 +212,7 @@ export default function MoviesList(){
                 <input type = "text" defaultValue={movie.genre} placeholder = "Genre" onChange={(e) => updateMovieGenre(e)} />
                 <input type = "text" defaultValue={movie.yearReleased} placeholder = "Released Year" onChange={(e) => updateMovieYear(e)} />
                 <input type = "text" defaultValue={movie.rating} placeholder = "Rating" onChange={(e) => updateMovieRating(e)} />
-
-                <button onClick={() => {
+                <button onClick={(e) => {
                     setUpdateMovieTrigger(false);
                         updateMovie({
                             variables: {
@@ -185,13 +226,10 @@ export default function MoviesList(){
                             }
                         })
                         refetch();
-                        reloadMovies();
                     }}>Update Movie</button>
             </form>
         </div>
         }
-
-        {/* <button onClick = {() => setAddMovieTrigger(true)} >Add Movie</button> */}
        
        {addMovieTrigger && 
        <div className={addUpdateStyles.container}>
@@ -220,6 +258,7 @@ export default function MoviesList(){
             </form>
         </div>
         }
+
         <ReactPaginate
             previousLabel={"Previous"}
             nextLabel={"Next"}
